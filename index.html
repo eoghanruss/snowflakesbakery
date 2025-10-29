@@ -1,0 +1,1356 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Bakery Tally — Refined (Single File)</title>
+
+  <!--
+    ================================================================
+    Bakery Tally — Refined Single-File App
+    ================================================================
+    - This file contains inline CSS and JS (everything in one file).
+    - Uses a CSS-only bubbly background animation (choice A as requested).
+    - Top: centered logo only (no settings, no categories, no favorites).
+    - Search bar retained; categories removed.
+    - Sticky Total bar improved: less transparent (95% opacity), clearer text.
+    - Each menu item shows a graphic image (files referenced by name).
+    - Add/Edit modal uses black text on white background where requested.
+    - Deal optimizer included (dynamic programming + memoization).
+    - LocalStorage persistence for menu and settings.
+    - Mobile-first with touch optimizations and animations.
+    - Accessibility: ARIA labels, keyboard support.
+    - No external dependencies (pure HTML/CSS/JS).
+    - NOTE: Place your images in `assets/` folder or same directory. Images referenced:
+      - assets/soda_bread.png
+      - assets/apple_tart.png
+      - assets/apple_crumble.png
+      - assets/scone.png
+      - assets/pear_almond_scone.png
+      - assets/cookie.png
+      - assets/danish.png
+      - assets/logo.PNG
+    ================================================================
+  -->
+
+  <style>
+    /* ================================================================
+       VARIABLES / THEME
+       ================================================================ */
+    :root{
+      --primary: #03A447; /* main background as requested */
+      --bg-dark: color-mix(in srgb, #03A447 80%, black 10%); /* subtle gradient mix */
+      --glass-white: rgba(255,255,255,0.95); /* used for more opaque total bar */
+      --glass-weak: rgba(255,255,255,0.12);
+      --glass-strong: rgba(255,255,255,0.18);
+      --text: #ffffff;
+      --muted: rgba(255,255,255,0.88);
+      --card-bg: rgba(255,255,255,0.06);
+      --card-border: rgba(255,255,255,0.12);
+      --shadow: 0 10px 30px rgba(0,0,0,0.25);
+      --radius: 14px;
+      --max-width: 1100px;
+      --safe-pad: env(safe-area-inset-bottom, 12px);
+      --ui-size: 56px;
+      --glass-opaque: rgba(255,255,255,0.95);
+      --accent: rgba(255,255,255,0.98);
+    }
+
+    /* ================================================================
+       BASIC LAYOUT
+       ================================================================ */
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      color:var(--text);
+      background: linear-gradient(180deg, var(--primary), var(--bg-dark));
+      overflow-y:auto;
+    }
+    *{box-sizing:border-box}
+
+    /* app container */
+    .app{
+      max-width:var(--max-width);
+      margin:0 auto;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      padding:18px;
+      position:relative;
+    }
+
+    /* ================================================================
+       BUBBLY BACKGROUND (CSS only)
+       - A lightweight CSS-only approach using radial gradients and keyframes.
+       - No canvas, no JS heavy animation, gentle performance footprint.
+       ================================================================ */
+    .bubbles{
+      position:fixed;
+      inset:0;
+      z-index:0;
+      pointer-events:none;
+      overflow:hidden;
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(255,255,255,0.02), transparent 20%),
+                  radial-gradient(900px 500px at 90% 80%, rgba(255,255,255,0.02), transparent 20%),
+                  linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+      mix-blend-mode: soft-light;
+    }
+
+    /* Each bubble is a simple pseudo-element animated vertically */
+    .bubbles .bubble{
+      position:absolute;
+      bottom:-10%;
+      border-radius:50%;
+      opacity:0.12;
+      filter: blur(6px);
+      animation: rise var(--d, 18s) linear infinite;
+      transform: translateY(0) scale(1);
+      will-change: transform, opacity;
+    }
+    .bubbles .bubble:nth-child(1){ left:6%; width:160px; height:160px; background: rgba(255,255,255,0.06); --d:20s; animation-delay:-2s; }
+    .bubbles .bubble:nth-child(2){ left:22%; width:220px; height:220px; background: rgba(255,255,255,0.05); --d:28s; animation-delay:-6s; }
+    .bubbles .bubble:nth-child(3){ left:38%; width:120px; height:120px; background: rgba(255,255,255,0.04); --d:18s; animation-delay:-4s; }
+    .bubbles .bubble:nth-child(4){ left:56%; width:200px; height:200px; background: rgba(255,255,255,0.06); --d:22s; animation-delay:-8s; }
+    .bubbles .bubble:nth-child(5){ left:74%; width:140px; height:140px; background: rgba(255,255,255,0.05); --d:26s; animation-delay:-12s; }
+    .bubbles .bubble:nth-child(6){ left:86%; width:180px; height:180px; background: rgba(255,255,255,0.03); --d:30s; animation-delay:-16s; }
+
+    @keyframes rise {
+      0% { transform: translateY(20vh) scale(0.9); opacity:0.12; }
+      50% { opacity:0.08; transform: translateY(60vh) scale(1.05); }
+      100% { transform: translateY(-40vh) scale(1.15); opacity:0; }
+    }
+
+    /* ================================================================
+       TOP / LOGO
+       - Centered logo only, no cropping, mobile-friendly.
+       ================================================================ */
+    header.app-header{
+      z-index:10;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding-top:20px;
+      padding-bottom:6px;
+      pointer-events:auto;
+    }
+    .logo{
+     
+     
+      align-items:center;
+      
+    }
+    .logo img{ width:500px; height:150px; object-fit:cover; display:block }
+
+    /* ================================================================
+       MAIN CONTENT AREA
+       ================================================================ */
+    main.content{
+      z-index:10;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      padding:6px 6px 86px 6px; /* leave space for sticky total */
+    }
+
+    /* Search bar (keeps functionality) */
+    .search-wrap{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px;
+      border-radius:12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 8px 22px rgba(0,0,0,0.14);
+      backdrop-filter: blur(6px) saturate(110%);
+    }
+    .search-wrap input[type="search"]{
+      background:transparent;
+      border:0;
+      outline:none;
+      color:var(--text);
+      font-size:16px;
+      width:100%;
+      padding:6px 4px;
+    }
+    .search-wrap svg{opacity:0.9}
+
+    /* menu grid */
+    .menu-grid{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:12px;
+      margin-top:6px;
+    }
+    @media(min-width:720px){
+      .menu-grid{ grid-template-columns: repeat(3,1fr) }
+    }
+
+    .menu-card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border-radius:12px;
+      padding:10px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      border:1px solid var(--card-border);
+      transition: transform .16s cubic-bezier(.2,.9,.3,1), box-shadow .16s;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select:none;
+      overflow:hidden;
+    }
+    .menu-card:hover{ transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.18) }
+
+    .menu-thumb{
+      width:64px;
+      height:64px;
+      min-width:64px;
+      min-height:64px;
+      border-radius:12px;
+      overflow:hidden;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12), inset 0 2px 6px rgba(255,255,255,0.02);
+    }
+    .menu-thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+    .menu-meta{ flex:1; display:flex; flex-direction:column; gap:6px; min-width:0; }
+    .menu-name{ font-weight:800; font-size:15px; color:var(--accent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .menu-sub{ font-size:13px; color:var(--muted); display:flex; gap:8px; align-items:center; }
+
+    .menu-controls{ display:flex; flex-direction:column; gap:8px; align-items:center; }
+
+    .qty-box{ min-width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.05); font-weight:800; }
+
+    .add-btn{
+      padding:8px 12px;
+      border-radius:10px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05));
+      border:1px solid rgba(255,255,255,0.08);
+      font-weight:800;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+      transition: transform .14s;
+    }
+    .add-btn:active{ transform: scale(.98) }
+
+    /* small deal badge */
+    .deal-flag{ display:inline-block; padding:6px 8px; border-radius:999px; font-size:11px; font-weight:700; color:#053; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.04); }
+
+    /* ================================================================
+       STICKY TOTAL BAR (less transparent and clearer)
+       - Goal: 95% opaque, crisp white text, subtle shadows, responsive
+       ================================================================ */
+    .total-bar{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 12px;
+      width: calc(100% - 36px);
+      max-width: var(--max-width);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:12px;
+      border-radius:16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.95)); /* 95% opaque white */
+      color: #042;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.28);
+      border: 1px solid rgba(0,0,0,0.06);
+      z-index:20;
+    }
+    .total-left{ display:flex; flex-direction:column; gap:2px }
+    .total-label{ font-size:12px; color: #666; }
+    .total-value{ font-size:20px; font-weight:900; color:#042; }
+
+    .total-actions{ display:flex; gap:10px; align-items:center }
+    .btn{
+      padding:10px 14px;
+      border-radius:12px;
+      font-weight:800;
+      border:0;
+      cursor:pointer;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+    .btn-clear{ background: transparent; color:#042; border:1px dashed rgba(0,0,0,0.08); padding:8px 12px }
+    .btn-checkout{ background: linear-gradient(180deg, #06b752, #039c3f); color:white; padding:10px 16px; border-radius:12px; box-shadow: 0 10px 26px rgba(3,156,63,0.28); }
+
+    .saved-line{ font-size:13px; color:#2a7b3e; font-weight:700; margin-top:4px }
+
+    /* ================================================================
+       MODALS (Add/Edit, Receipt)
+       ================================================================ */
+    .modal{
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 18px;
+      z-index: 60;
+      background: linear-gradient(180deg, rgba(0,0,0,0.34), rgba(0,0,0,0.46));
+    }
+    .modal.open{ display:flex; animation: modalIn .24s ease both; }
+    @keyframes modalIn{ from{ opacity:0; transform: translateY(40px) } to { opacity:1; transform: translateY(0) } }
+
+    .modal-card{
+      width:100%;
+      max-width:720px;
+      border-radius:12px;
+      background: #fff;
+      color: #042;
+      padding:16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.24);
+      transform-origin:bottom center;
+    }
+
+    /* Add/Edit uses white bg with black text (per your request) */
+    .menu-form label{ font-size:13px; color:#425055; display:block; margin-bottom:6px; }
+    .menu-form input[type="text"], .menu-form input[type="number"], .menu-form textarea, .menu-form select{
+      width:100%;
+      padding:10px;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,0.08);
+      margin-bottom:10px;
+      color:#111; /* black text */
+      background:#fff;
+      font-size:14px;
+    }
+    .menu-form textarea{ min-height:70px; resize:vertical }
+
+    /* receipt styling */
+    .receipt-lines{ margin-top:8px; max-height:54vh; overflow:auto }
+    .receipt-row{ display:flex; justify-content:space-between; padding:8px 6px; border-bottom:1px dashed rgba(0,0,0,0.06); align-items:center }
+    .receipt-summary{ padding-top:10px; border-top:1px solid rgba(0,0,0,0.06); margin-top:8px }
+
+    /* simple toast */
+    .toast{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 110px;
+      padding:10px 16px;
+      background: rgba(0,0,0,0.72);
+      color:white;
+      border-radius:10px;
+      z-index:80;
+      display:none;
+    }
+    .toast.open{ display:block; animation: toastIn .14s both; }
+    @keyframes toastIn{ from{ opacity:0; transform:translate(-50%, 10px) } to{ opacity:1; transform:translate(-50%,0) } }
+
+    /* small helpers */
+    .muted{ color: #667; font-size:13px }
+    .hidden{ display:none }
+
+    /* responsive tweaks */
+    @media (max-width:420px){
+      .menu-grid{ grid-template-columns: repeat(1, 1fr) }
+      .logo{ width:76px; height:76px }
+      .total-value{ font-size:18px }
+      .btn-checkout{ padding:10px 12px }
+    }
+
+    /* ================================================================
+       Extra Micro-animations & polish (bouncy add, subtle pop, fade)
+       ================================================================ */
+    .pop{
+      animation: pop .36s cubic-bezier(.2,.9,.3,1);
+    }
+    @keyframes pop{
+      0% { transform: scale(.96); opacity:0.9 }
+      50% { transform: scale(1.06) }
+      100% { transform: scale(1) }
+    }
+    .fade-in{ animation: fadeIn .28s ease both }
+    @keyframes fadeIn{ from{ opacity:0; transform: translateY(6px) } to{ opacity:1; transform: translateY(0) } }
+
+    /* small visual cue when a deal applies */
+    .glow-deal{
+      box-shadow: 0 12px 30px rgba(6,183,82,0.12), inset 0 1px 0 rgba(255,255,255,0.2);
+      border: 1px solid rgba(6,183,82,0.12);
+    }
+      
+      /* Bubble animation background */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: radial-gradient(circle at 20% 20%, rgba(255,255,255,0.15), transparent 40%),
+              radial-gradient(circle at 80% 80%, rgba(255,255,255,0.15), transparent 40%),
+              radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1), transparent 60%);
+  background-size: 200% 200%;
+  animation: bubbleMove 12s infinite alternate ease-in-out;
+  z-index: 0;
+}
+
+/* move the background around softly */
+@keyframes bubbleMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ensure your main content sits above the background */
+main, .content, .app {
+  position: relative;
+  z-index: 1;
+}
+
+.bubbles {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bubbles span {
+  position: absolute;
+  bottom: -50px;
+  width: 20px; height: 20px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 50%;
+  animation: rise 12s infinite ease-in;
+}
+
+
+    /* ================================================================
+       END CSS
+       ================================================================ */
+  </style>
+</head>
+<body>
+    
+    <div class="bubbles"></div>
+  <!-- BUBBLES BACKDROP -->
+  <div class="bubbles" aria-hidden="true">
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+  </div>
+
+  <div class="app" role="application" aria-label="Bakery Tally refined app">
+
+    <!-- TOP: centered logo only -->
+    <header class="app-header" role="banner" aria-label="Logo header">
+      <div class="logo" aria-hidden="false">
+        <img src="assets/logo.PNG" alt="Bakery logo (logo.PNG)" id="topLogo" />
+      </div>
+    </header>
+
+    <!-- MAIN content area -->
+    <main class="content" role="main">
+      <!-- Search bar only (kept) -->
+      <div class="search-wrap" role="search" aria-label="Search items">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M21 21l-4.35-4.35" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <input id="searchInput" type="search" placeholder="Search" aria-label="Search menu" />
+      </div>
+
+      <!-- Items grid -->
+      <section>
+        <div id="menuGrid" class="menu-grid" role="list" aria-label="Menu items">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+      <!-- Add item / editor trigger -->
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+        <button id="openAddItem" class="btn" style="background:#fff;color:#042;border-radius:10px;padding:10px 14px;box-shadow:0 8px 22px rgba(0,0,0,0.12)">+ Add / Edit Item</button>
+      </div>
+
+      <!-- small hint -->
+      <div style="text-align:center;margin-top:8px;color:rgba(255,255,255,0.9);font-size:13px">Tap item to add • Long press to set quantity • Double-tap to edit</div>
+
+    </main>
+
+    <!-- STICKY TOTAL BAR (95% opaque white) -->
+    <div class="total-bar" role="contentinfo" aria-live="polite" aria-atomic="true">
+      <div class="total-left">
+        <div class="total-label">Current Total</div>
+        <div class="total-value" id="totalValue">€0.00</div>
+        <div id="savedLine" class="saved-line" style="display:none">You saved €0.00!</div>
+      </div>
+      <div class="total-actions">
+        <button id="clearAll" class="btn btn-clear" aria-label="Clear all items">CLEAR ALL</button>
+        <button id="checkoutBtn" class="btn btn-checkout" aria-label="Checkout and show receipt">CHECKOUT</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- MODALS: Add/Edit item and Receipt -->
+  <div id="menuModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card" role="document" aria-labelledby="menuModalTitle">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div id="menuModalTitle" style="font-weight:800;font-size:16px">Add / Edit Menu Item</div>
+        <button id="closeMenuModal" class="btn" style="background:transparent;color:#042;border:1px solid rgba(0,0,0,0.06)">Close</button>
+      </div>
+
+      <form id="menuForm" class="menu-form" style="margin-top:12px">
+        <label for="itemName">Item name</label>
+        <input id="itemName" name="name" type="text" placeholder="e.g., Soda bread" required />
+
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">
+            <label for="itemPrice">Unit price (€)</label>
+            <input id="itemPrice" name="price" type="number" step="0.01" min="0" value="0.00" />
+          </div>
+          <div style="width:140px">
+            <label for="itemCategory">Category (optional)</label>
+            <input id="itemCategory" name="category" type="text" placeholder="Bread" />
+          </div>
+        </div>
+
+        <label for="itemDeals">Multi-buy deals (one per line, format: 2 for 8.00)</label>
+        <textarea id="itemDeals" placeholder="2 for 8.00"></textarea>
+
+        <label for="itemImage">Image filename (place in assets/ or root)</label>
+        <input id="itemImage" type="text" placeholder="assets/soda_bread.png" />
+
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button type="submit" class="btn" style="background:#03A447;color:white">Save Item</button>
+          <button id="deleteItemBtn" type="button" class="btn" style="background:transparent;border:1px solid rgba(0,0,0,0.06)">Delete</button>
+        </div>
+        <div style="margin-top:8px;font-size:13px;color:#425055">Note: Text inputs in this modal are intentionally black for readability.</div>
+      </form>
+    </div>
+  </div>
+
+  <div id="receiptModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card" role="document" aria-labelledby="receiptTitle">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div id="receiptTitle" style="font-weight:800;font-size:16px">Receipt</div>
+        <div style="display:flex;gap:8px">
+          <button id="printBtn" class="btn" style="background:#06b752;color:white">Print</button>
+          <button id="exportCsvBtn" class="btn" style="background:transparent;border:1px solid rgba(0,0,0,0.06)">Export CSV</button>
+          <button id="closeReceipt" class="btn" style="background:transparent;border:1px solid rgba(0,0,0,0.06)">Close</button>
+        </div>
+      </div>
+
+      <div id="receiptContent" style="margin-top:12px">
+        <div id="receiptLines" class="receipt-lines" role="region" aria-label="Order lines">
+          <!-- generated by JS -->
+        </div>
+
+        <div id="receiptSummary" class="receipt-summary" style="margin-top:8px">
+          <!-- summary inserted by JS -->
+        </div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+          <button id="confirmSave" class="btn" style="background:#03A447;color:white">Confirm & Save</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /**
+     * Bakery Tally — Refined
+     * Single-file JS
+     *
+     * Key features included:
+     * - Menu with images
+     * - Search
+     * - Tap to add, long-press to set qty (via prompt fallback for simplicity)
+     * - Deal optimizer (DP with memo)
+     * - LocalStorage persistence
+     * - Add/Edit Item modal (white background + black text)
+     * - Receipt modal, CSV export, print
+     * - Bubbly CSS background (chosen)
+     *
+     * Notes:
+     * - Keep images in assets/ or same folder as filenames referenced in code.
+     * - All money calculations are done in cents.
+     * - Accessibility: ARIA labels and keyboard support provided where sensible.
+     *
+     * Big file — scroll down for more helper functions and initialization.
+     */
+
+    (function(){
+      'use strict';
+
+      /* ============================
+         Utilities: money formatting + DOM helpers
+         ============================ */
+      function toCents(val){
+        if(typeof val === 'string') val = parseFloat(val.replace(',', '.'));
+        if(isNaN(val)) return 0;
+        return Math.round(Number(val) * 100);
+      }
+      function fromCents(cents){
+        const sign = cents < 0 ? '-' : '';
+        const abs = Math.abs(cents);
+        const euros = Math.floor(abs / 100);
+        const rem = Math.abs(abs % 100);
+        return sign + '€' + euros + '.' + (rem < 10 ? '0' + rem : rem);
+      }
+
+      function el(sel, root=document){ return root.querySelector(sel) }
+      function els(sel, root=document){ return Array.from(root.querySelectorAll(sel)) }
+      function create(tag, attrs={}, children=[]){
+        const e = document.createElement(tag);
+        for(const k in attrs){
+          if(k === 'class') e.className = attrs[k];
+          else if(k === 'html') e.innerHTML = attrs[k];
+          else e.setAttribute(k, attrs[k]);
+        }
+        if(!Array.isArray(children)) children = [children];
+        children.forEach(c => {
+          if(c == null) return;
+          if(typeof c === 'string') e.appendChild(document.createTextNode(c));
+          else e.appendChild(c);
+        });
+        return e;
+      }
+
+      /* ============================
+         Default data (menu & combos)
+         ============================ */
+      const DEFAULT_MENU = [
+        { id:'soda-bread', name:'Soda bread', price_cents:toCents(4.50), image:'assets/soda_bread.png', deals:[{qty:2, price_cents:toCents(8.00)}], category:'Bread' },
+        { id:'apple-tart', name:'Apple tart', price_cents:toCents(6.50), image:'assets/apple_tart.png', deals:[], category:'Pastry' },
+        { id:'apple-crumble', name:'Apple crumble', price_cents:toCents(5.50), image:'assets/apple_crumble.png', deals:[], category:'Dessert' },
+        { id:'scone', name:'Scone', price_cents:toCents(1.00), image:'assets/scone.png', deals:[{qty:4, price_cents:toCents(3.00)}], category:'Pastry' },
+        { id:'pear-almond-scone', name:'Pear & Almond scone', price_cents:toCents(2.00), image:'assets/pear_almond_scone.png', deals:[], category:'Pastry' },
+        { id:'cookie', name:'Cookie', price_cents:toCents(2.50), image:'assets/cookie.png', deals:[{qty:2, price_cents:toCents(4.00)}], category:'Snack' },
+        { id:'danish', name:'Danishes and croissants', price_cents:toCents(2.00), image:'assets/danish.png', deals:[{qty:2, price_cents:toCents(3.50)},{qty:3, price_cents:toCents(5.00)}], category:'Pastry' }
+      ];
+
+      const DEFAULT_COMBOS = [
+        // Soda bread + (Apple crumble OR Apple tart) => €10
+        {
+          id:'soda_combo',
+          name:'Soda + Apple combo',
+          items_options: [
+            [{id:'soda-bread', qty:1}],
+            [{id:'apple-crumble', qty:1},{id:'apple-tart', qty:1}]
+          ],
+          price_cents: toCents(10.00)
+        }
+      ];
+
+      /* ============================
+         LocalStorage keys & state
+         ============================ */
+      const LS_MENU = 'bt_menu_v1';
+      const LS_SETTINGS = 'bt_settings_v1';
+      const LS_AUDIT = 'bt_audit_v1';
+
+      const state = {
+        menu: [],
+        combos: DEFAULT_COMBOS.slice(),
+        order: {}, // id -> qty
+        settings: { tax_enabled:false, tax_percent:0, rounding:false },
+        audit: []
+      };
+
+      /* ============================
+         Persistence helpers
+         ============================ */
+      function load(){
+        try{
+          const raw = localStorage.getItem(LS_MENU);
+          if(raw) state.menu = JSON.parse(raw);
+          else state.menu = DEFAULT_MENU.map(it => ({...it}));
+        }catch(e){ state.menu = DEFAULT_MENU.map(it => ({...it})) }
+
+        try{
+          const raw2 = localStorage.getItem(LS_SETTINGS);
+          if(raw2) state.settings = {...state.settings, ...JSON.parse(raw2)};
+        }catch(e){}
+
+        try{
+          const raw3 = localStorage.getItem(LS_AUDIT);
+          if(raw3) state.audit = JSON.parse(raw3);
+        }catch(e){}
+      }
+      function saveMenu(){ localStorage.setItem(LS_MENU, JSON.stringify(state.menu)) }
+      function saveSettings(){ localStorage.setItem(LS_SETTINGS, JSON.stringify(state.settings)) }
+      function saveAudit(){ localStorage.setItem(LS_AUDIT, JSON.stringify(state.audit)) }
+
+      /* ============================
+         Order operations
+         ============================ */
+      function addToOrder(id, qty=1){
+        qty = Math.max(0, Math.floor(qty));
+        if(!state.order[id]) state.order[id] = 0;
+        state.order[id] += qty;
+        if(state.order[id] <= 0) delete state.order[id];
+        renderUI();
+      }
+      function setOrderQty(id, qty){
+        qty = Math.max(0, Math.floor(qty));
+        if(qty === 0) delete state.order[id];
+        else state.order[id] = qty;
+        renderUI();
+      }
+      function removeFromOrder(id){
+        delete state.order[id];
+        renderUI();
+      }
+      function clearOrder(){
+        state.order = {};
+        renderUI();
+      }
+
+      /* ============================
+         Deal optimizer - build actions
+         - Similar approach to previous file but adapted/streamlined.
+         ============================ */
+      function buildActions(menu, combos){
+        const actions = [];
+        // unit actions
+        menu.forEach(m => {
+          actions.push({
+            id: 'unit-'+m.id,
+            name: `1× ${m.name}`,
+            cost: m.price_cents,
+            deltas: {[m.id]:1},
+            type:'unit',
+            details:{itemId:m.id, qty:1}
+          });
+        });
+        // multi-buy
+        menu.forEach(m => {
+          if(Array.isArray(m.deals) && m.deals.length){
+            m.deals.forEach(d => {
+              actions.push({
+                id: `multibuy-${m.id}-${d.qty}`,
+                name: `${d.qty} for ${fromCents(d.price_cents)}`,
+                cost: d.price_cents,
+                deltas: {[m.id]: d.qty},
+                type:'multibuy',
+                details:{itemId:m.id, qty:d.qty}
+              });
+            });
+          }
+        });
+        // combos: expand OR options to concrete combos
+        combos.forEach(combo => {
+          // cartesian product of options arrays
+          function cartesian(arrays){
+            return arrays.reduce((acc, arr) => {
+              const res = [];
+              acc.forEach(a=>{
+                arr.forEach(b=>{
+                  res.push(a.concat([b]));
+                });
+              });
+              return res;
+            }, [[]]);
+          }
+          const concrete = cartesian(combo.items_options);
+          concrete.forEach((set, idx) => {
+            const deltas = {};
+            set.forEach(x => { deltas[x.id] = (deltas[x.id] || 0) + x.qty });
+            const nameParts = set.map(x => `${x.qty}×${ (menu.find(m=>m.id===x.id)||{name:x.id}).name }`).join(' + ');
+            actions.push({
+              id:`combo-${combo.id}-${idx}`,
+              name: `${combo.name} (${nameParts})`,
+              cost: combo.price_cents,
+              deltas,
+              type:'combo',
+              details:{comboId:combo.id, components:set}
+            });
+          });
+        });
+
+        return actions;
+      }
+
+      function orderToVector(menu, order){
+        return menu.map(m => order[m.id] || 0);
+      }
+      function vecKey(vec){ return vec.join('|') }
+      function applyDelta(vec, menu, deltas){
+        const res = vec.slice();
+        for(const id in deltas){
+          const idx = menu.findIndex(m=>m.id===id);
+          if(idx === -1) return null;
+          if(res[idx] < deltas[id]) return null;
+          res[idx] -= deltas[id];
+        }
+        return res;
+      }
+
+      function combineActions(applied){
+        const map = {};
+        applied.forEach(a => { const key = a.id+'|'+a.name; if(!map[key]) map[key] = {...a, count:0}; map[key].count++;});
+        return Object.values(map);
+      }
+
+      function optimizeOrder(menu, combos, order){
+        const actions = buildActions(menu, combos);
+        const start = orderToVector(menu, order);
+        const memo = new Map();
+
+        function recurse(vec){
+          const key = vecKey(vec);
+          if(memo.has(key)) return memo.get(key);
+          const empty = vec.every(v => v === 0);
+          if(empty) { const r = {cost:0, applied:[]}; memo.set(key,r); return r; }
+
+          let best = {cost: Infinity, applied: []};
+
+          for(const act of actions){
+            const nv = applyDelta(vec, menu, act.deltas);
+            if(!nv) continue;
+            const sub = recurse(nv);
+            const total = act.cost + sub.cost;
+            if(total < best.cost){
+              best = { cost: total, applied: [act].concat(sub.applied) };
+            }
+          }
+          memo.set(key, best);
+          return best;
+        }
+
+        const res = recurse(start);
+        return { cost: res.cost, applied: combineActions(res.applied) };
+      }
+
+      /* ============================
+         Calculate totals (subtotal, discount, tax, total)
+         ============================ */
+      function calculateTotals(){
+        const menu = state.menu;
+        const order = state.order;
+        let rawSubtotal = 0;
+        const breakdown = [];
+        menu.forEach(m => {
+          const qty = order[m.id] || 0;
+          if(qty > 0){
+            rawSubtotal += qty * m.price_cents;
+            breakdown.push({ id:m.id, name:m.name, qty, unit_price:m.price_cents, line: qty*m.price_cents });
+          }
+        });
+        const opt = optimizeOrder(menu, state.combos, order);
+        const appliedDeals = opt.applied || [];
+        const bestCost = opt.cost || 0;
+        let discount = rawSubtotal - bestCost;
+        if(discount < 0) discount = 0;
+
+        let tax = 0;
+        let total = bestCost;
+        if(state.settings.tax_enabled){
+          tax = Math.round(total * (state.settings.tax_percent/100));
+          total += tax;
+        }
+        if(state.settings.rounding){
+          total = Math.round(total/5) * 5;
+        }
+        return { subtotal: rawSubtotal, appliedDeals, discount, tax, total, breakdown };
+      }
+
+      /* ============================
+         DOM Rendering
+         ============================ */
+      const menuGrid = el('#menuGrid');
+      const searchInput = el('#searchInput');
+      const totalValueEl = el('#totalValue');
+      const savedLineEl = el('#savedLine');
+      const toastEl = el('#toast');
+
+      function renderMenu(filter=''){
+        menuGrid.innerHTML = '';
+        const q = (filter || '').toLowerCase().trim();
+        let items = state.menu.slice();
+        if(q){
+          items = items.filter(it => (it.name + ' ' + (it.category||'') + ' ' + (it.tags||'')).toLowerCase().includes(q));
+        }
+        items.forEach(it => {
+          const card = create('div', {class:'menu-card', role:'listitem', tabindex:0});
+          const thumb = create('div', {class:'menu-thumb'});
+          const img = document.createElement('img');
+          img.alt = it.name;
+          // fallback if image missing: bakery emoji
+          img.onerror = function(){ this.style.display='none'; const s = create('div',{style:''}, '🥐'); s.style.fontSize='28px'; thumb.appendChild(s); };
+          img.src = it.image || ('assets/' + it.id + '.png');
+          thumb.appendChild(img);
+
+          const meta = create('div',{class:'menu-meta'});
+          const name = create('div',{class:'menu-name'}, it.name);
+          const sub = create('div',{class:'menu-sub'}, fromCents(it.price_cents));
+          if(it.deals && it.deals.length) sub.appendChild(create('div',{class:'deal-flag'}, 'DEALS'));
+
+          meta.appendChild(name); meta.appendChild(sub);
+
+          const controls = create('div',{class:'menu-controls'});
+          const qtyBox = create('div',{class:'qty-box', 'aria-hidden':'true'}, (state.order[it.id]||0).toString());
+          const addBtn = create('button',{class:'add-btn', 'aria-label':'Add item'}, '+');
+
+          controls.appendChild(qtyBox);
+          controls.appendChild(addBtn);
+
+          card.appendChild(thumb);
+          card.appendChild(meta);
+          card.appendChild(controls);
+
+          // interactions
+          addBtn.addEventListener('click', (ev) => { ev.stopPropagation(); addToOrder(it.id, 1); animateAdd(addBtn); });
+          card.addEventListener('click', () => { addToOrder(it.id, 1); animateAdd(card); });
+
+          // double-tap/dblclick opens editor for quick edit
+          card.addEventListener('dblclick', (ev) => { openEditModal(it.id); });
+
+          // long press -> prompt quantity (touch friendly)
+          setupLongPress(card, () => { openQuantityPrompt(it.id); }, 650);
+
+          menuGrid.appendChild(card);
+        });
+      }
+
+      function renderTotals(){
+        const t = calculateTotals();
+        totalValueEl.textContent = fromCents(t.total);
+        if(t.discount > 0){
+          savedLineEl.style.display = 'block';
+          savedLineEl.textContent = `You saved ${fromCents(t.discount)}!`;
+        } else {
+          savedLineEl.style.display = 'none';
+        }
+        // small animation on total update
+        const elTV = totalValueEl;
+        elTV.classList.remove('pop');
+        void elTV.offsetWidth;
+        elTV.classList.add('pop');
+      }
+
+      function renderUI(){
+        renderMenu(searchInput.value);
+        renderTotals();
+        saveMenu();
+        saveSettings();
+        saveAudit();
+      }
+
+      /* ============================
+         Small animations helpers
+         ============================ */
+      function animateAdd(elem){
+        try{
+          elem.classList.add('pop');
+          setTimeout(()=> elem.classList.remove('pop'), 360);
+        }catch(e){}
+      }
+
+      function setupLongPress(elem, cb, duration=700){
+        let t=null, moved=false;
+        function start(e){
+          moved=false;
+          t = setTimeout(()=>{ cb(); t=null; }, duration);
+        }
+        function cancel(){
+          if(t) clearTimeout(t);
+          t=null;
+        }
+        elem.addEventListener('touchstart', start);
+        elem.addEventListener('mousedown', start);
+        elem.addEventListener('touchmove', ()=>{ moved=true; cancel(); });
+        elem.addEventListener('mousemove', ()=>{ moved=true; cancel(); });
+        elem.addEventListener('touchend', cancel);
+        elem.addEventListener('mouseup', cancel);
+        elem.addEventListener('mouseleave', cancel);
+      }
+
+      function openQuantityPrompt(itemId){
+        const it = state.menu.find(m => m.id === itemId);
+        if(!it) return;
+        const cur = state.order[itemId] || 0;
+        const val = prompt(`Set quantity for ${it.name} (current ${cur})`, String(cur));
+        if(val === null) return;
+        const n = parseInt(val,10);
+        if(isNaN(n) || n < 0){ showToast('Invalid quantity'); return; }
+        setOrderQty(itemId, n);
+      }
+
+      /* ============================
+         Toast
+         ============================ */
+      let toastTimer = null;
+      function showToast(msg, ms=3000){
+        toastEl.textContent = msg;
+        toastEl.classList.add('open');
+        if(toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(()=> toastEl.classList.remove('open'), ms);
+      }
+
+      /* ============================
+         Receipt modal + CSV + Print
+         ============================ */
+      const menuModal = el('#menuModal');
+      const receiptModal = el('#receiptModal');
+
+      function openMenuModal(){
+        menuModal.classList.add('open');
+        menuModal.setAttribute('aria-hidden','false');
+      }
+      function closeMenuModal(){
+        menuModal.classList.remove('open');
+        menuModal.setAttribute('aria-hidden','true');
+      }
+
+      let editingItemId = null;
+      function openEditModal(itemId){
+        editingItemId = itemId || null;
+        openMenuModal();
+        const item = state.menu.find(m => m.id === itemId);
+        el('#itemName').value = item ? item.name : '';
+        el('#itemPrice').value = item ? (item.price_cents/100).toFixed(2) : '0.00';
+        el('#itemCategory').value = item ? (item.category||'') : '';
+        el('#itemDeals').value = item ? ( (item.deals||[]).map(d=> `${d.qty} for ${(d.price_cents/100).toFixed(2)}`).join('\n') ) : '';
+        el('#itemImage').value = item ? (item.image||'') : '';
+      }
+
+      // Save menu form
+      el('#menuForm').addEventListener('submit', function(ev){
+        ev.preventDefault();
+        const name = el('#itemName').value.trim();
+        const price = parseFloat(el('#itemPrice').value) || 0;
+        const category = el('#itemCategory').value.trim();
+        const dealsTxt = el('#itemDeals').value.trim();
+        const image = el('#itemImage').value.trim() || '';
+
+        if(!name){ showToast('Name required'); return; }
+        if(price < 0){ showToast('Invalid price'); return; }
+
+        const deals = parseDealsString(dealsTxt);
+
+        if(editingItemId){
+          const idx = state.menu.findIndex(m => m.id === editingItemId);
+          if(idx !== -1){
+            state.menu[idx].name = name;
+            state.menu[idx].price_cents = toCents(price);
+            state.menu[idx].category = category;
+            state.menu[idx].deals = deals;
+            state.menu[idx].image = image;
+            showToast('Item updated');
+          }
+        } else {
+          const newId = 'item-' + Math.random().toString(36).slice(2,9);
+          state.menu.push({ id:newId, name, price_cents:toCents(price), category, deals, image });
+          showToast('Item added');
+        }
+        saveMenu();
+        closeMenuModal();
+        renderUI();
+      });
+
+      el('#closeMenuModal').addEventListener('click', closeMenuModal);
+      el('#openAddItem').addEventListener('click', ()=> { editingItemId = null; openEditModal(null); });
+
+      // delete item
+      el('#deleteItemBtn').addEventListener('click', function(){
+        if(!editingItemId){ showToast('No item selected to delete'); return; }
+        if(!confirm('Delete this menu item?')) return;
+        const idx = state.menu.findIndex(m => m.id === editingItemId);
+        if(idx !== -1) state.menu.splice(idx,1);
+        editingItemId = null;
+        saveMenu();
+        closeMenuModal();
+        renderUI();
+        showToast('Item deleted');
+      });
+
+      // Parse deals text area lines into deals array
+      function parseDealsString(txt){
+        const lines = txt.split('\n').map(s=>s.trim()).filter(Boolean);
+        const out = [];
+        lines.forEach(l=>{
+          const m = l.match(/(\d+)\s*for\s*([0-9]+(?:\.[0-9]+)?)/i);
+          if(m) out.push({ qty: parseInt(m[1],10), price_cents: toCents(parseFloat(m[2])) });
+        });
+        return out;
+      }
+
+      /* ============================
+         Receipt modal wiring
+         ============================ */
+      function openReceipt(){
+        receiptModal.classList.add('open');
+        receiptModal.setAttribute('aria-hidden','false');
+        renderReceipt();
+      }
+      function closeReceipt(){
+        receiptModal.classList.remove('open');
+        receiptModal.setAttribute('aria-hidden','true');
+      }
+
+      el('#checkoutBtn').addEventListener('click', function(){
+        if(Object.keys(state.order).length === 0){
+          showToast('No items in the order');
+          // optional: small shake animation
+          return;
+        }
+        openReceipt();
+      });
+      el('#closeReceipt').addEventListener('click', closeReceipt);
+
+      function renderReceipt(){
+        const linesEl = el('#receiptLines');
+        const summaryEl = el('#receiptSummary');
+        linesEl.innerHTML = '';
+        summaryEl.innerHTML = '';
+
+        const totals = calculateTotals();
+        totals.breakdown.forEach(l => {
+          const row = create('div',{class:'receipt-row'}, [
+            create('div',{style:'flex:1'}, l.name),
+            create('div',{}, `${l.qty}`),
+            create('div',{}, fromCents(l.unit_price)),
+            create('div',{}, fromCents(l.line))
+          ]);
+          row.style.display='flex';
+          row.style.justifyContent='space-between';
+          row.style.gap='8px';
+          linesEl.appendChild(row);
+        });
+
+        if(totals.appliedDeals && totals.appliedDeals.length){
+          const head = create('div',{style:'font-weight:800;margin-top:8px'}, 'Applied Deals');
+          linesEl.appendChild(head);
+          totals.appliedDeals.forEach(d => {
+            const row = create('div',{class:'receipt-row'}, [
+              create('div',{style:'flex:1'}, `${d.name} × ${d.count}`),
+              create('div',{}, ''),
+              create('div',{}, ''),
+              create('div',{}, fromCents(d.cost * d.count))
+            ]);
+            linesEl.appendChild(row);
+          });
+        }
+
+        const s = create('div',{style:'padding-top:8px'}, [
+          create('div',{}, `Subtotal: ${fromCents(totals.subtotal)}`),
+          create('div',{}, `Savings: - ${fromCents(totals.discount)}`),
+          create('div',{}, `Tax: ${fromCents(totals.tax)}`),
+          create('div',{style:'font-weight:900;margin-top:8px'}, `Total: ${fromCents(totals.total)}`)
+        ]);
+        summaryEl.appendChild(s);
+      }
+
+      el('#printBtn').addEventListener('click', function(){
+        printReceipt();
+      });
+      el('#exportCsvBtn').addEventListener('click', function(){
+        exportCsv();
+      });
+
+      el('#confirmSave').addEventListener('click', function(){
+        // save to audit log
+        const totals = calculateTotals();
+        const timestamp = Date.now();
+        const items_summary = Object.entries(state.order).map(([id,qty])=>{
+          const m = state.menu.find(x=>x.id===id);
+          return `${m ? m.name : id}x${qty}`;
+        }).join(', ');
+        state.audit.push({ timestamp, total: totals.total, subtotal: totals.subtotal, items_summary });
+        if(state.audit.length > 100) state.audit = state.audit.slice(-100);
+        saveAudit();
+        // clear order but keep menu
+        state.order = {};
+        renderUI();
+        closeReceipt();
+        showToast('Order saved');
+      });
+
+      /* ============================
+         Print and CSV helpers
+         ============================ */
+      function exportCsv(){
+        const totals = calculateTotals();
+        const rows = [['Item','Qty','Unit','Line']];
+        totals.breakdown.forEach(b=>{
+          rows.push([b.name,b.qty,(b.unit_price/100).toFixed(2),(b.line/100).toFixed(2)]);
+        });
+        if(totals.appliedDeals.length){
+          rows.push([]);
+          rows.push(['Deal','Count','Unit price']);
+          totals.appliedDeals.forEach(d => rows.push([d.name,d.count,(d.cost/100).toFixed(2)]));
+        }
+        rows.push([]);
+        rows.push(['Subtotal',(totals.subtotal/100).toFixed(2)]);
+        rows.push(['Savings',(totals.discount/100).toFixed(2)]);
+        rows.push(['Tax',(totals.tax/100).toFixed(2)]);
+        rows.push(['Total',(totals.total/100).toFixed(2)]);
+
+        const csv = rows.map(r=> r.map(c=> `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], {type:'text/csv'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'receipt.csv'; document.body.appendChild(a); a.click();
+        setTimeout(()=> { URL.revokeObjectURL(url); a.remove(); }, 2000);
+      }
+
+      function printReceipt(){
+        const totals = calculateTotals();
+        let html = `<html><head><title>Receipt</title><style>body{font-family:Arial;padding:20px;color:#111}table{width:100%;border-collapse:collapse}td,th{padding:6px;border-bottom:1px solid #eee}</style></head><body>`;
+        html += `<h2>Bakery Receipt</h2>`;
+        html += `<table><thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Line</th></tr></thead><tbody>`;
+        totals.breakdown.forEach(b => {
+          html += `<tr><td>${b.name}</td><td>${b.qty}</td><td>${(b.unit_price/100).toFixed(2)}</td><td>${(b.line/100).toFixed(2)}</td></tr>`;
+        });
+        html += `</tbody></table>`;
+        if(totals.appliedDeals.length){
+          html += `<h3>Applied Deals</h3><ul>`;
+          totals.appliedDeals.forEach(d=> html += `<li>${d.name} × ${d.count} (${(d.cost/100).toFixed(2)} each)</li>`);
+          html += `</ul>`;
+        }
+        html += `<h3>Summary</h3><p>Subtotal: ${(totals.subtotal/100).toFixed(2)}<br/>Savings: ${(totals.discount/100).toFixed(2)}<br/>Tax: ${(totals.tax/100).toFixed(2)}<br/><strong>Total: ${(totals.total/100).toFixed(2)}</strong></p>`;
+        html += `</body></html>`;
+        const w = window.open('', '_blank');
+        w.document.write(html); w.document.close(); w.print();
+      }
+
+      /* ============================
+         Clear All with undo
+         ============================ */
+      el('#clearAll').addEventListener('click', function(){
+        if(Object.keys(state.order).length === 0){ showToast('Order already empty'); return; }
+        const backup = Object.assign({}, state.order);
+        clearOrder();
+        // undo option
+        showUndo(`Order cleared`, ()=>{ state.order = backup; renderUI(); });
+      });
+
+      function showUndo(msg, undoCb, ms=4500){
+        toastEl.innerHTML = '';
+        const span = create('span',{}, msg);
+        const btn = create('button',{class:'btn', style:'margin-left:8px;background:#fff;color:#042;padding:6px 8px;border-radius:8px'}, 'Undo');
+        btn.addEventListener('click', ()=>{
+          undoCb();
+          toastEl.classList.remove('open');
+        });
+        toastEl.appendChild(span); toastEl.appendChild(btn);
+        toastEl.classList.add('open');
+        setTimeout(()=> { toastEl.classList.remove('open'); toastEl.innerHTML=''; }, ms);
+      }
+
+      /* ============================
+         Keyboard shortcuts
+         ============================ */
+      document.addEventListener('keydown', function(ev){
+        if(ev.key === 'c' || ev.key === 'C'){ clearOrder(); showToast('Order cleared'); }
+        else if(ev.key === 'r' || ev.key === 'R'){ if(Object.keys(state.order).length) openReceipt(); else showToast('No items to checkout'); }
+        else if(!isNaN(parseInt(ev.key)) && ev.key !== ' '){
+          const idx = parseInt(ev.key,10) - 1;
+          if(state.menu[idx]) addToOrder(state.menu[idx].id, 1);
+        }
+      });
+
+      /* ============================
+         Demo/test cases for the optimiser — log results to console
+         ============================ */
+      function runTests(){
+        console.log('Running deal optimizer tests...');
+        const menu = DEFAULT_MENU;
+        const combos = DEFAULT_COMBOS;
+        function test(orderDesc, expectedEuros){
+          const opt = optimizeOrder(menu, combos, orderDesc);
+          const actual = opt.cost;
+          const expected = toCents(expectedEuros);
+          console.log('Order', orderDesc, '=>', fromCents(actual), 'expected', fromCents(expected), actual===expected ? 'PASS' : 'FAIL', opt.applied);
+        }
+        test({danish:3}, 5.00);
+        test({cookie:5}, 10.50);
+        test({ 'soda-bread':2, 'apple-crumble':1 }, 13.50);
+        test({ 'soda-bread':1, 'apple-crumble':1 }, 10.00);
+        test({ scone:4 }, 3.00);
+        console.log('Tests complete.');
+      }
+
+      /* ============================
+         Init load & bind UI
+         ============================ */
+      function init(){
+        load();
+        renderUI();
+        runTests();
+
+        // search binding
+        searchInput.addEventListener('input', ()=> renderMenu(searchInput.value));
+
+        // Allow tapping total value to open receipt
+        totalValueEl.addEventListener('click', function(){
+          if(Object.keys(state.order).length) openReceipt();
+          else showToast('No items yet');
+        });
+
+        // Modal outside click to close
+        document.querySelectorAll('.modal').forEach(m=>{
+          m.addEventListener('click', (e) => {
+            if(e.target === m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }
+          });
+        });
+
+        // ensure logo not cropped: resize handling (no-op but left for dev)
+        window.addEventListener('resize', ()=>{ /* could adapt layout if needed */ });
+      }
+
+      init();
+
+      // Expose for debugging
+      window.BakeryTally = {
+        state, addToOrder, setOrderQty, removeFromOrder, calculateTotals,
+        optimizeOrder
+      };
+
+    })();
+      
+      for (let i = 0; i < 15; i++) {
+  const bubble = document.createElement("span");
+  bubble.style.left = Math.random() * 100 + "%";
+  bubble.style.width = bubble.style.height = 100 + Math.random() * 40 + "px";
+  bubble.style.animationDelay = Math.random() * 5 + "s";
+  document.querySelector(".bubbles").appendChild(bubble);
+}
+
+  </script>
+
+  <!--
+    ====================================================================
+    END OF FILE
+    ====================================================================
+    Notes / Next steps:
+    - This single-file app is built with the requested tweaks:
+      * logo only at top
+      * no categories or favorites
+      * clearer, more opaque total bar
+      * CSS-only bubbly background
+      * item images with fallbacks
+      * add/edit modal has black text on white
+      * optimized deal logic included
+    - If you want I can:
+      * Separate into separate files (index.html, styles.css, app.js)
+      * Swap image paths to data-URIs to avoid external files
+      * Add tiny sound effects (click/tap) via <audio> elements
+      * Inject placeholder SVG icons if you don't have images yet
+    ====================================================================
+  -->
+
+</body>
+</html>
