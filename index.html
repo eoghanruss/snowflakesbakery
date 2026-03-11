@@ -17,7 +17,7 @@
             --font-h: 'Playfair Display', serif;
             --font-b: 'Inter', sans-serif;
             --ease: cubic-bezier(0.25, 0.8, 0.25, 1);
-            --header-h: 80px;
+            --header-h: 90px; /* Increased to accommodate larger logo */
         }
 
         * {
@@ -99,10 +99,10 @@
 
         header.scrolled {
             position: fixed;
-            background: rgba(253, 251, 247, 0.95);
+            background: rgba(44, 94, 59, 0.98); /* Changed to Forest Green */
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         }
 
         .logo {
@@ -111,7 +111,7 @@
         }
 
         .logo img {
-            max-height: 60px;
+            max-height: 70px; /* Increased from 60px */
             width: auto;
             object-fit: contain;
         }
@@ -134,7 +134,7 @@
             background: transparent;
         }
 
-        /* Hamburger lines white by default (over dark hero), green when scrolled or active */
+        /* Hamburger lines white by default and when scrolled (over green) */
         .hamburger span {
             display: block;
             width: 24px;
@@ -144,9 +144,9 @@
             transition: all 0.3s var(--ease);
         }
 
-        header.scrolled .hamburger span,
+        /* When menu is open, the overlay is cream, so lines must be green */
         .hamburger.active span {
-            background-color: var(--primary);
+            background-color: var(--primary) !important;
         }
 
         .hamburger.active span:nth-child(1) {
@@ -224,9 +224,10 @@
             text-align: center;
             padding: 0 5%;
             background-image: url('assets/background.png');
-            background-attachment: fixed;
             background-size: cover;
             background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: scroll; /* Fixes mobile zoom issue */
         }
 
         .hero::before {
@@ -457,7 +458,7 @@
         /* --- Footer & Contact --- */
         footer {
             background-color: var(--primary);
-            color: var(--bg); /* All text white */
+            color: var(--bg);
             padding: 80px 5% 40px;
         }
 
@@ -642,18 +643,19 @@
                 font-family: var(--font-b);
                 font-size: 0.95rem;
                 font-weight: 500;
-                color: var(--bg); /* White text on dark hero */
+                color: var(--bg);
                 position: relative;
                 padding: 10px 0;
                 transition: color 0.3s var(--ease);
             }
 
+            /* Links stay white on green background, underline turns light green */
             header.scrolled .nav-list a {
-                color: var(--text); /* Dark text on white header */
+                color: var(--bg);
             }
             
             header.scrolled .nav-list a:hover {
-                color: var(--primary);
+                color: var(--primary-light);
             }
 
             .nav-list a::after {
@@ -668,11 +670,16 @@
             }
 
             header.scrolled .nav-list a::after {
-                background-color: var(--primary);
+                background-color: var(--primary-light);
             }
 
             .nav-list a:hover::after {
                 width: 100%;
+            }
+
+            /* Add parallax back ONLY for desktop */
+            .hero {
+                background-attachment: fixed;
             }
 
             .menu-grid, .testimonial-grid {
@@ -741,7 +748,7 @@
         <div class="menu-grid">
             <div class="menu-card fade-up">
                 <div class="menu-img-wrap">
-                    <img src="assets/croissants.png" alt="Artisanal Croissants">
+                    <img src="assets/croissants.png" alt="Artisanal Croissants" loading="lazy">
                 </div>
                 <div class="menu-content">
                     <h3>Artisanal Croissants</h3>
@@ -752,7 +759,7 @@
             
             <div class="menu-card fade-up">
                 <div class="menu-img-wrap">
-                    <img src="assets/scones.png" alt="Classic Scones">
+                    <img src="assets/scones.png" alt="Classic Scones" loading="lazy">
                 </div>
                 <div class="menu-content">
                     <h3>Classic Scones</h3>
@@ -763,7 +770,7 @@
 
             <div class="menu-card fade-up">
                 <div class="menu-img-wrap">
-                    <img src="assets/bread.png" alt="Traditional Soda Bread">
+                    <img src="assets/bread.png" alt="Traditional Soda Bread" loading="lazy">
                 </div>
                 <div class="menu-content">
                     <h3>Traditional Soda Bread</h3>
@@ -804,7 +811,7 @@
     <section id="story">
         <div class="about-wrap">
             <div class="about-img fade-up">
-                <img src="assets/baker.png" alt="Baker preparing dough">
+                <img src="assets/baker.png" alt="Baker preparing dough" loading="lazy">
             </div>
             <div class="about-text fade-up">
                 <h2>Our Story</h2>
