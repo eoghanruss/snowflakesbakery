@@ -1,922 +1,937 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Newmarket Bakery | Artisanal Bakes in Co. Clare</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<style>
-:root {
---primary: #2C5E3B; /* Forest Green /
---primary-light: #6B8E76; / Sage Green /
---bg: #FDFBF7; / Soft Cream */
---text: #2a2a2a;
---font-h: 'Playfair Display', serif;
---font-b: 'Inter', sans-serif;
---ease: cubic-bezier(0.25, 0.8, 0.25, 1);
---announcement-h: 35px;
---header-h: 80px;
-}
-
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    html {
-        scroll-behavior: smooth;
-    }
-
-    body {
-        font-family: var(--font-b);
-        background-color: var(--bg);
-        color: var(--text);
-        line-height: 1.6;
-        overflow-x: hidden;
-    }
-
-    body.menu-open {
-        overflow: hidden;
-    }
-
-    h1, h2, h3, h4 {
-        font-family: var(--font-h);
-        font-weight: 600;
-        line-height: 1.2;
-        color: var(--primary);
-    }
-
-    a {
-        text-decoration: none;
-        color: inherit;
-    }
-
-    ul {
-        list-style: none;
-    }
-
-    img {
-        max-width: 100%;
-        display: block;
-    }
-
-    /* --- Animations --- */
-    .fade-up {
-        opacity: 0;
-        transform: translateY(40px);
-        transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
-    }
-
-    .fade-up.visible {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    @keyframes marquee {
-        0% { transform: translateX(100%); }
-        100% { transform: translateX(-100%); }
-    }
-
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(44, 94, 59, 0.4); }
-        70% { box-shadow: 0 0 0 15px rgba(44, 94, 59, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(44, 94, 59, 0); }
-    }
-
-    /* --- Announcement Bar --- */
-    .announcement {
-        background-color: var(--primary);
-        color: var(--bg);
-        height: var(--announcement-h);
-        display: flex;
-        align-items: center;
-        overflow: hidden;
-        position: absolute;
-        top: 0;
-        width: 100%;
-        z-index: 1000;
-    }
-
-    .announcement-text {
-        white-space: nowrap;
-        font-size: 0.85rem;
-        font-weight: 400;
-        letter-spacing: 0.5px;
-        animation: marquee 25s linear infinite;
-    }
-
-    /* --- Header & Nav --- */
-    header {
-        position: absolute;
-        top: var(--announcement-h);
-        left: 0;
-        width: 100%;
-        height: var(--header-h);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 5%;
-        z-index: 999;
-        background: transparent;
-        transition: all 0.4s var(--ease);
-    }
-
-    header.scrolled {
-        position: fixed;
-        top: 0;
-        background: rgba(253, 251, 247, 0.85);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    }
-
-    .logo {
-        display: flex;
-        align-items: center;
-    }
-
-    .logo img {
-        max-height: 40px;
-        width: auto;
-        object-fit: contain;
-    }
-
-    .desktop-nav {
-        display: none;
-    }
-
-    /* Hamburger */
-    .hamburger {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        width: 44px;
-        height: 44px;
-        cursor: pointer;
-        z-index: 1001;
-        border: none;
-        background: transparent;
-    }
-
-    .hamburger span {
-        display: block;
-        width: 24px;
-        height: 2px;
-        background-color: var(--primary);
-        margin: 3px 0;
-        transition: all 0.3s var(--ease);
-    }
-
-    .hamburger.active span:nth-child(1) {
-        transform: translateY(8px) rotate(45deg);
-    }
-
-    .hamburger.active span:nth-child(2) {
-        opacity: 0;
-    }
-
-    .hamburger.active span:nth-child(3) {
-        transform: translateY(-8px) rotate(-45deg);
-    }
-
-    /* Mobile Menu Overlay */
-    .mobile-menu {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100vh;
-        background: var(--bg);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.4s var(--ease);
-        z-index: 1000;
-    }
-
-    .mobile-menu.active {
-        opacity: 1;
-        pointer-events: all;
-    }
-
-    .mobile-nav-list {
-        text-align: center;
-    }
-
-    .mobile-nav-list li {
-        margin: 20px 0;
-        transform: translateY(20px);
-        opacity: 0;
-        transition: all 0.4s var(--ease);
-    }
-
-    .mobile-menu.active .mobile-nav-list li {
-        transform: translateY(0);
-        opacity: 1;
-    }
-
-    .mobile-menu.active .mobile-nav-list li:nth-child(1) { transition-delay: 0.1s; }
-    .mobile-menu.active .mobile-nav-list li:nth-child(2) { transition-delay: 0.2s; }
-    .mobile-menu.active .mobile-nav-list li:nth-child(3) { transition-delay: 0.3s; }
-    .mobile-menu.active .mobile-nav-list li:nth-child(4) { transition-delay: 0.4s; }
-    .mobile-menu.active .mobile-nav-list li:nth-child(5) { transition-delay: 0.5s; }
-
-    .mobile-nav-list a {
-        font-family: var(--font-h);
-        font-size: 2rem;
-        color: var(--primary);
-        display: block;
-        padding: 10px;
-    }
-
-    /* --- Hero Section --- */
-    .hero {
-        position: relative;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: 0 5%;
-        background-image: url('[https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80](https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80)');
-        background-attachment: fixed;
-        background-size: cover;
-        background-position: center;
-    }
-
-    .hero::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(18, 38, 24, 0.65); /* Dark green overlay */
-        z-index: 1;
-    }
-
-    .hero-content {
-        position: relative;
-        z-index: 2;
-        max-width: 800px;
-        color: var(--bg);
-    }
-
-    .hero h1 {
-        color: var(--bg);
-        font-size: clamp(2.5rem, 6vw, 4.5rem);
-        margin-bottom: 20px;
-        line-height: 1.1;
-    }
-
-    .hero p {
-        font-size: clamp(1rem, 2vw, 1.25rem);
-        font-weight: 300;
-        margin-bottom: 40px;
-        max-width: 600px;
-        margin-inline: auto;
-    }
-
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 44px;
-        min-height: 44px;
-        padding: 16px 36px;
-        background: var(--bg);
-        color: var(--primary);
-        font-family: var(--font-b);
-        font-weight: 500;
-        font-size: 1rem;
-        border-radius: 50px;
-        transition: all 0.3s var(--ease);
-        animation: pulse 2.5s infinite;
-    }
-
-    .btn:hover {
-        background: var(--primary);
-        color: var(--bg);
-        animation: none;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        transform: translateY(-2px);
-    }
-
-    /* --- Sections Common --- */
-    section {
-        padding: 100px 5%;
-    }
-
-    .section-header {
-        text-align: center;
-        margin-bottom: 60px;
-    }
-
-    .section-header h2 {
-        font-size: clamp(2rem, 4vw, 3rem);
-        margin-bottom: 15px;
-    }
-
-    .section-header p {
-        color: var(--primary-light);
-        font-size: 1.1rem;
-    }
-
-    /* --- Menu Section --- */
-    .menu-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 30px;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-    .menu-card {
-        background: #fff;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-        transition: all 0.4s var(--ease);
-        display: flex;
-        flex-direction: column;
-    }
-
-    .menu-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 15px 30px rgba(44, 94, 59, 0.1);
-    }
-
-    .menu-img-wrap {
-        position: relative;
-        width: 100%;
-        padding-top: 75%; /* 4:3 aspect ratio */
-        overflow: hidden;
-    }
-
-    .menu-img-wrap img {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.6s var(--ease);
-    }
-
-    .menu-card:hover .menu-img-wrap img {
-        transform: scale(1.08);
-    }
-
-    .menu-content {
-        padding: 25px;
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-    }
-
-    .menu-content h3 {
-        font-size: 1.4rem;
-        margin-bottom: 10px;
-    }
-
-    .menu-content p {
-        color: #666;
-        font-size: 0.95rem;
-        margin-bottom: 20px;
-        flex-grow: 1;
-    }
-
-    .menu-price {
-        font-family: var(--font-h);
-        font-size: 1.25rem;
-        color: var(--primary);
-        font-weight: 600;
-    }
-
-    /* --- Testimonials Section --- */
-    .testimonials {
-        background-color: #f5f3ed;
-    }
-
-    .testimonial-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 30px;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-    .review-card {
-        padding: 40px 30px;
-        background: var(--bg);
-        border-radius: 12px;
-        text-align: center;
-        border: 1px solid rgba(44, 94, 59, 0.05);
-    }
-
-    .stars {
-        color: #D4AF37;
-        margin-bottom: 15px;
-        font-size: 1.2rem;
-    }
-
-    .review-text {
-        font-family: var(--font-h);
-        font-style: italic;
-        font-size: clamp(1.1rem, 2vw, 1.25rem);
-        line-height: 1.8;
-        color: var(--text);
-        margin-bottom: 25px;
-    }
-
-    .reviewer {
-        font-weight: 600;
-        font-size: 0.9rem;
-        color: var(--primary-light);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    /* --- About Section --- */
-    .about-wrap {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 40px;
-        max-width: 1200px;
-        margin: 0 auto;
-        align-items: center;
-    }
-
-    .about-img {
-        position: relative;
-        border-radius: 12px;
-        overflow: hidden;
-    }
-
-    .about-img img {
-        width: 100%;
-        height: auto;
-        object-fit: cover;
-        border-radius: 12px;
-    }
-
-    .about-text h2 {
-        font-size: clamp(2rem, 4vw, 3rem);
-        margin-bottom: 20px;
-    }
-
-    .about-text p {
-        margin-bottom: 20px;
-        color: #555;
-        font-size: 1.05rem;
-    }
-
-    /* --- Footer & Contact --- */
-    footer {
-        background-color: var(--primary);
-        color: var(--bg);
-        padding: 80px 5% 40px;
-    }
-
-    .footer-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 50px;
-        max-width: 1200px;
-        margin: 0 auto;
-        border-bottom: 1px solid rgba(253, 251, 247, 0.2);
-        padding-bottom: 60px;
-        margin-bottom: 40px;
-    }
-
-    .footer-info h3, .footer-form h3 {
-        color: var(--bg);
-        font-size: 2rem;
-        margin-bottom: 30px;
-    }
-
-    .footer-info p {
-        margin-bottom: 15px;
-        display: flex;
-        align-items: flex-start;
-        opacity: 0.9;
-        font-weight: 300;
-    }
-
-    .footer-info strong {
-        display: inline-block;
-        width: 80px;
-        font-weight: 500;
-        color: var(--bg);
-    }
-
-    .footer-info a {
-        transition: color 0.3s var(--ease);
-        min-height: 44px;
-        display: inline-flex;
-        align-items: center;
-    }
-
-    .footer-info a:hover {
-        color: var(--primary-light);
-    }
-
-    .contact-form {
-        display: flex;
-        flex-direction: column;
-        gap: 25px;
-    }
-
-    .input-group {
-        position: relative;
-    }
-
-    .contact-form input,
-    .contact-form textarea {
-        width: 100%;
-        background: transparent;
-        border: none;
-        border-bottom: 1px solid rgba(253, 251, 247, 0.4);
-        color: var(--bg);
-        font-family: var(--font-b);
-        font-size: 1rem;
-        padding: 10px 0;
-        transition: border-color 0.3s var(--ease);
-    }
-
-    .contact-form textarea {
-        resize: vertical;
-        min-height: 80px;
-    }
-
-    .contact-form input:focus,
-    .contact-form textarea:focus {
-        outline: none;
-        border-bottom-color: var(--bg);
-    }
-
-    .contact-form input::placeholder,
-    .contact-form textarea::placeholder {
-        color: rgba(253, 251, 247, 0.5);
-    }
-
-    .submit-btn {
-        background: var(--bg);
-        color: var(--primary);
-        border: none;
-        padding: 15px 30px;
-        font-family: var(--font-b);
-        font-weight: 600;
-        font-size: 1rem;
-        cursor: pointer;
-        border-radius: 4px;
-        transition: all 0.3s var(--ease);
-        align-self: flex-start;
-        min-height: 44px;
-        min-width: 44px;
-    }
-
-    .submit-btn:hover {
-        background: var(--primary-light);
-        color: var(--bg);
-    }
-
-    .footer-bottom {
-        text-align: center;
-        font-size: 0.85rem;
-        opacity: 0.6;
-    }
-
-    /* --- Custom Toast Notification --- */
-    .toast {
-        position: fixed;
-        bottom: -100px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--bg);
-        color: var(--primary);
-        padding: 15px 30px;
-        border-radius: 50px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        font-family: var(--font-b);
-        font-weight: 500;
-        z-index: 2000;
-        transition: bottom 0.5s var(--ease), opacity 0.5s var(--ease);
-        opacity: 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .toast.show {
-        bottom: 40px;
-        opacity: 1;
-    }
-
-    /* --- Media Queries (Desktop) --- */
-    @media (min-width: 768px) {
-        .desktop-nav {
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snowflake's Bakery | Newmarket on Fergus</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍞</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2C5E3B; /* Forest Green */
+            --primary-light: #6B8E76; /* Sage Green */
+            --bg: #FDFBF7; /* Soft Cream */
+            --text: #2a2a2a;
+            --font-h: 'Playfair Display', serif;
+            --font-b: 'Inter', sans-serif;
+            --ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+            --header-h: 80px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-b);
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        body.menu-open {
+            overflow: hidden;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: var(--font-h);
+            font-weight: 600;
+            line-height: 1.2;
+            color: var(--primary);
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        img {
+            max-width: 100%;
             display: block;
         }
 
-        .hamburger {
+        /* --- Animations --- */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+        }
+
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(253, 251, 247, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(253, 251, 247, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(253, 251, 247, 0); }
+        }
+
+        /* --- Header & Nav --- */
+        header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: var(--header-h);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 5%;
+            z-index: 999;
+            background: transparent;
+            transition: all 0.4s var(--ease);
+        }
+
+        header.scrolled {
+            position: fixed;
+            background: rgba(253, 251, 247, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            max-height: 60px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .desktop-nav {
             display: none;
         }
 
-        .nav-list {
+        /* Hamburger */
+        .hamburger {
             display: flex;
-            gap: 40px;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            z-index: 1001;
+            border: none;
+            background: transparent;
         }
 
-        .nav-list a {
-            font-family: var(--font-b);
-            font-size: 0.95rem;
-            font-weight: 500;
+        /* Hamburger lines white by default (over dark hero), green when scrolled or active */
+        .hamburger span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background-color: var(--bg);
+            margin: 3px 0;
+            transition: all 0.3s var(--ease);
+        }
+
+        header.scrolled .hamburger span,
+        .hamburger.active span {
+            background-color: var(--primary);
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
+        }
+
+        /* Mobile Menu Overlay */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s var(--ease);
+            z-index: 1000;
+        }
+
+        .mobile-menu.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .mobile-nav-list {
+            text-align: center;
+        }
+
+        .mobile-nav-list li {
+            margin: 20px 0;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.4s var(--ease);
+        }
+
+        .mobile-menu.active .mobile-nav-list li {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .mobile-menu.active .mobile-nav-list li:nth-child(1) { transition-delay: 0.1s; }
+        .mobile-menu.active .mobile-nav-list li:nth-child(2) { transition-delay: 0.2s; }
+        .mobile-menu.active .mobile-nav-list li:nth-child(3) { transition-delay: 0.3s; }
+        .mobile-menu.active .mobile-nav-list li:nth-child(4) { transition-delay: 0.4s; }
+        .mobile-menu.active .mobile-nav-list li:nth-child(5) { transition-delay: 0.5s; }
+
+        .mobile-nav-list a {
+            font-family: var(--font-h);
+            font-size: 2rem;
+            color: var(--primary);
+            display: block;
+            padding: 10px;
+        }
+
+        /* --- Hero Section --- */
+        .hero {
             position: relative;
-            padding: 10px 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 5%;
+            background-image: url('assets/background.png');
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
         }
 
-        .nav-list a::after {
+        .hero::before {
             content: '';
             position: absolute;
-            bottom: 5px;
-            left: 0;
-            width: 0;
-            height: 1.5px;
-            background-color: var(--primary);
-            transition: width 0.3s var(--ease);
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(18, 38, 24, 0.65); /* Dark green overlay */
+            z-index: 1;
         }
 
-        .nav-list a:hover::after {
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            color: var(--bg);
+        }
+
+        .hero h1 {
+            color: var(--bg);
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            margin-bottom: 20px;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            font-weight: 300;
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-inline: auto;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            min-height: 44px;
+            padding: 16px 36px;
+            background: var(--bg);
+            color: var(--primary);
+            font-family: var(--font-b);
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: 50px;
+            transition: all 0.3s var(--ease);
+            animation: pulse 2.5s infinite;
+        }
+
+        .btn:hover {
+            background: var(--primary-light);
+            color: var(--bg);
+            animation: none;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* --- Sections Common --- */
+        section {
+            padding: 100px 5%;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-header h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            margin-bottom: 15px;
+        }
+
+        .section-header p {
+            color: var(--primary-light);
+            font-size: 1.1rem;
+        }
+
+        /* --- Menu Section --- */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .menu-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            transition: all 0.4s var(--ease);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(44, 94, 59, 0.1);
+        }
+
+        .menu-img-wrap {
+            position: relative;
             width: 100%;
+            padding-top: 100%; /* 1:1 Square aspect ratio */
+            overflow: hidden;
         }
 
-        .menu-grid, .testimonial-grid {
-            grid-template-columns: repeat(3, 1fr);
+        .menu-img-wrap img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s var(--ease);
         }
 
+        .menu-card:hover .menu-img-wrap img {
+            transform: scale(1.08);
+        }
+
+        .menu-content {
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .menu-content h3 {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+        }
+
+        .menu-content p {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .menu-price {
+            font-family: var(--font-h);
+            font-size: 1.25rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* --- Testimonials Section --- */
+        .testimonials {
+            background-color: #f5f3ed;
+        }
+
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .review-card {
+            padding: 40px 30px;
+            background: var(--bg);
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(44, 94, 59, 0.05);
+        }
+
+        .stars {
+            color: #D4AF37;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .review-text {
+            font-family: var(--font-h);
+            font-style: italic;
+            font-size: clamp(1.1rem, 2vw, 1.25rem);
+            line-height: 1.8;
+            color: var(--text);
+            margin-bottom: 25px;
+        }
+
+        .reviewer {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--primary-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- About Section --- */
         .about-wrap {
-            grid-template-columns: 1fr 1fr;
-            gap: 80px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            align-items: center;
+        }
+
+        .about-img {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 1 / 1; /* Forces square crop */
+        }
+
+        .about-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        .about-text h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            margin-bottom: 20px;
+        }
+
+        .about-text p {
+            margin-bottom: 20px;
+            color: #555;
+            font-size: 1.05rem;
+        }
+
+        /* --- Footer & Contact --- */
+        footer {
+            background-color: var(--primary);
+            color: var(--bg); /* All text white */
+            padding: 80px 5% 40px;
         }
 
         .footer-grid {
-            grid-template-columns: 1fr 1fr;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 50px;
+            max-width: 1200px;
+            margin: 0 auto;
+            border-bottom: 1px solid rgba(253, 251, 247, 0.2);
+            padding-bottom: 60px;
+            margin-bottom: 40px;
         }
-    }
-</style>
+
+        .footer-info h3, .footer-form h3 {
+            color: var(--bg);
+            font-size: 2rem;
+            margin-bottom: 30px;
+        }
+
+        .footer-info p {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            font-weight: 300;
+            color: var(--bg);
+        }
+
+        .footer-info strong {
+            display: inline-block;
+            width: 80px;
+            font-weight: 600;
+            color: var(--bg);
+        }
+
+        .footer-info a {
+            transition: color 0.3s var(--ease);
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            color: var(--bg);
+        }
+
+        .footer-info a:hover {
+            color: var(--primary-light);
+        }
+
+        .social-links {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(253, 251, 247, 0.1);
+            color: var(--bg);
+            transition: all 0.3s var(--ease);
+        }
+
+        .social-links a:hover {
+            background: var(--bg);
+            color: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        .contact-form {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .contact-form input,
+        .contact-form textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(253, 251, 247, 0.5);
+            color: var(--bg);
+            font-family: var(--font-b);
+            font-size: 1rem;
+            padding: 10px 0;
+            transition: border-color 0.3s var(--ease);
+        }
+
+        .contact-form textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .contact-form input:focus,
+        .contact-form textarea:focus {
+            outline: none;
+            border-bottom-color: var(--bg);
+            border-bottom-width: 2px;
+        }
+
+        .contact-form input::placeholder,
+        .contact-form textarea::placeholder {
+            color: rgba(253, 251, 247, 0.8);
+        }
+
+        .submit-btn {
+            background: var(--bg);
+            color: var(--primary);
+            border: none;
+            padding: 15px 30px;
+            font-family: var(--font-b);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s var(--ease);
+            align-self: flex-start;
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        .submit-btn:hover {
+            background: var(--primary-light);
+            color: var(--bg);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            font-size: 0.85rem;
+            opacity: 0.8;
+            color: var(--bg);
+        }
+
+        /* --- Custom Toast Notification --- */
+        .toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg);
+            color: var(--primary);
+            padding: 15px 30px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            font-family: var(--font-b);
+            font-weight: 500;
+            z-index: 2000;
+            transition: bottom 0.5s var(--ease), opacity 0.5s var(--ease);
+            opacity: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.show {
+            bottom: 40px;
+            opacity: 1;
+        }
+
+        /* --- Media Queries (Desktop) --- */
+        @media (min-width: 768px) {
+            .desktop-nav {
+                display: block;
+            }
+
+            .hamburger {
+                display: none;
+            }
+
+            .nav-list {
+                display: flex;
+                gap: 40px;
+            }
+
+            .nav-list a {
+                font-family: var(--font-b);
+                font-size: 0.95rem;
+                font-weight: 500;
+                color: var(--bg); /* White text on dark hero */
+                position: relative;
+                padding: 10px 0;
+                transition: color 0.3s var(--ease);
+            }
+
+            header.scrolled .nav-list a {
+                color: var(--text); /* Dark text on white header */
+            }
+            
+            header.scrolled .nav-list a:hover {
+                color: var(--primary);
+            }
+
+            .nav-list a::after {
+                content: '';
+                position: absolute;
+                bottom: 5px;
+                left: 0;
+                width: 0;
+                height: 1.5px;
+                background-color: var(--bg);
+                transition: width 0.3s var(--ease), background-color 0.3s var(--ease);
+            }
+
+            header.scrolled .nav-list a::after {
+                background-color: var(--primary);
+            }
+
+            .nav-list a:hover::after {
+                width: 100%;
+            }
+
+            .menu-grid, .testimonial-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .about-wrap {
+                grid-template-columns: 1fr 1fr;
+                gap: 80px;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<div class="announcement">
-    <div class="announcement-text">
-        🍞 Fresh sourdough out of the oven at 10 AM today! | ☕ Order any pastry and get 50% off your morning coffee. | 🍞 Fresh sourdough out of the oven at 10 AM today! | ☕ Order any pastry and get 50% off your morning coffee.
-    </div>
-</div>
+    <header id="header">
+        <a href="#" class="logo">
+            <img src="assets/logo.png" alt="Snowflake's Bakery Logo">
+        </a>
 
-<header id="header">
-    <a href="#" class="logo">
-        <svg width="180" height="40" viewBox="0 0 180 40" fill="none" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)">
-            <text x="0" y="28" font-family="'Playfair Display', serif" font-size="24" font-weight="700" fill="var(--primary)">Newmarket Bakery</text>
-        </svg>
-    </a>
+        <nav class="desktop-nav">
+            <ul class="nav-list">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#menu">Our Menu</a></li>
+                <li><a href="#story">Our Story</a></li>
+                <li><a href="#reviews">Reviews</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
 
-    <nav class="desktop-nav">
-        <ul class="nav-list">
-            <li><a href="#home">Home</a></li>
-            <li><a href="#menu">Our Menu</a></li>
-            <li><a href="#story">Our Story</a></li>
-            <li><a href="#reviews">Reviews</a></li>
-            <li><a href="#contact">Contact</a></li>
+        <button class="hamburger" aria-label="Toggle Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+    </header>
+
+    <div class="mobile-menu">
+        <ul class="mobile-nav-list">
+            <li><a href="#home" class="mobile-link">Home</a></li>
+            <li><a href="#menu" class="mobile-link">Our Menu</a></li>
+            <li><a href="#story" class="mobile-link">Our Story</a></li>
+            <li><a href="#reviews" class="mobile-link">Reviews</a></li>
+            <li><a href="#contact" class="mobile-link">Contact</a></li>
         </ul>
-    </nav>
-
-    <button class="hamburger" aria-label="Toggle Menu">
-        <span></span>
-        <span></span>
-        <span></span>
-    </button>
-</header>
-
-<div class="mobile-menu">
-    <ul class="mobile-nav-list">
-        <li><a href="#home" class="mobile-link">Home</a></li>
-        <li><a href="#menu" class="mobile-link">Our Menu</a></li>
-        <li><a href="#story" class="mobile-link">Our Story</a></li>
-        <li><a href="#reviews" class="mobile-link">Reviews</a></li>
-        <li><a href="#contact" class="mobile-link">Contact</a></li>
-    </ul>
-</div>
-
-<section id="home" class="hero">
-    <div class="hero-content fade-up">
-        <h1>Proudly serving the Newmarket on Fergus community.</h1>
-        <p>We are your local, independent bakery dedicated to crafting fresh, artisanal bakes every single morning.</p>
-        <a href="#menu" class="btn">Explore Our Menu</a>
     </div>
-</section>
 
-<section id="menu">
-    <div class="section-header fade-up">
-        <h2>Fresh From The Oven</h2>
-        <p>Baked with love, locally sourced ingredients, and time-honored techniques.</p>
-    </div>
-    
-    <div class="menu-grid">
-        <div class="menu-card fade-up">
-            <div class="menu-img-wrap">
-                <img src="[https://images.unsplash.com/photo-1549903072-7e6e0bedb7fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80](https://images.unsplash.com/photo-1549903072-7e6e0bedb7fb?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80)" alt="Artisanal Croissants">
+    <section id="home" class="hero">
+        <div class="hero-content fade-up">
+            <h1>Proudly serving the Newmarket on Fergus community.</h1>
+            <p>We are your local, independent bakery dedicated to crafting fresh, artisanal bakes every single morning.</p>
+            <a href="#menu" class="btn">Explore Our Menu</a>
+        </div>
+    </section>
+
+    <section id="menu">
+        <div class="section-header fade-up">
+            <h2>Fresh From The Oven</h2>
+            <p>Baked with love, locally sourced ingredients, and time-honored techniques.</p>
+        </div>
+        
+        <div class="menu-grid">
+            <div class="menu-card fade-up">
+                <div class="menu-img-wrap">
+                    <img src="assets/croissants.png" alt="Artisanal Croissants">
+                </div>
+                <div class="menu-content">
+                    <h3>Artisanal Croissants</h3>
+                    <p>Flaky, buttery perfection. Hand-laminated over 3 days using premium Irish butter for that authentic taste.</p>
+                    <span class="menu-price">€3.50</span>
+                </div>
             </div>
-            <div class="menu-content">
-                <h3>Artisanal Croissants</h3>
-                <p>Flaky, buttery perfection. Hand-laminated over 3 days using premium Irish butter for that authentic taste.</p>
-                <span class="menu-price">€3.50</span>
+            
+            <div class="menu-card fade-up">
+                <div class="menu-img-wrap">
+                    <img src="assets/scones.png" alt="Classic Scones">
+                </div>
+                <div class="menu-content">
+                    <h3>Classic Scones</h3>
+                    <p>Soft, warm, and crumbly. Served best with a generous dollop of clotted cream and homemade berry jam.</p>
+                    <span class="menu-price">€2.80</span>
+                </div>
+            </div>
+
+            <div class="menu-card fade-up">
+                <div class="menu-img-wrap">
+                    <img src="assets/bread.png" alt="Traditional Soda Bread">
+                </div>
+                <div class="menu-content">
+                    <h3>Traditional Soda Bread</h3>
+                    <p>A Co. Clare staple. Dense, wholesome, and baked fresh every dawn using a secret family recipe.</p>
+                    <span class="menu-price">€4.50</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="reviews" class="testimonials">
+        <div class="section-header fade-up">
+            <h2>Local Love</h2>
+            <p>What our neighbors in Co. Clare are saying.</p>
+        </div>
+        
+        <div class="testimonial-grid">
+            <div class="review-card fade-up">
+                <div class="stars">★★★★★</div>
+                <p class="review-text">"The absolute best coffee in Newmarket on Fergus, hands down. And their soda bread reminds me of my grandmother's. Always a warm welcome from the staff!"</p>
+                <p class="reviewer">— Aoife M., Local Resident</p>
+            </div>
+
+            <div class="review-card fade-up">
+                <div class="stars">★★★★★</div>
+                <p class="review-text">"I stop here every morning before work. The artisanal croissants are dangerously good. It’s exactly the kind of independent bakery our town needed."</p>
+                <p class="reviewer">— Sean T., Commuter</p>
+            </div>
+
+            <div class="review-card fade-up">
+                <div class="stars">★★★★★</div>
+                <p class="review-text">"Beautiful sleek interior, incredibly friendly staff, and the scones are to die for. You can taste the quality and the local ingredients in every single bite."</p>
+                <p class="reviewer">— Ciara O., Weekend Regular</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="story">
+        <div class="about-wrap">
+            <div class="about-img fade-up">
+                <img src="assets/baker.png" alt="Baker preparing dough">
+            </div>
+            <div class="about-text fade-up">
+                <h2>Our Story</h2>
+                <p>Rooted in the heart of Newmarket on Fergus, Co. Clare, our bakery was born from a simple belief: that good bread brings people together.</p>
+                <p>We honor traditional baking methods, allowing our sourdough to ferment slowly and sourcing our dairy and flour from local Irish farms. Every pastry is shaped by hand, and every loaf is baked with patience and passion.</p>
+                <p>Whether you're grabbing a quick coffee before heading to Shannon, or lingering over a scone on a quiet Sunday morning, we're here to offer a little slice of comfort to our community.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer id="contact">
+        <div class="footer-grid">
+            <div class="footer-info fade-up">
+                <h3>Drop by for a bite</h3>
+                <p><strong>Address:</strong> Main St, Newmarket,<br>Newmarket on Fergus, Co. Clare</p>
+                <p><strong>Phone:</strong> 083 016 5976</p>
+                <p><strong>Email:</strong> <a href="mailto:info@snowflakesbakery.com">info@snowflakesbakery.com</a></p>
+                <p><strong>Hours:</strong> Mon-Thur: Closed<br>Fri-Sun: 10am - 3pm</p>
+                
+                <div class="social-links">
+                    <a href="https://www.facebook.com/snowflakes.bakery/" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                    </a>
+                    <a href="https://www.instagram.com/snowflakes.bakery/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                    </a>
+                </div>
+            </div>
+
+            <div class="footer-form fade-up">
+                <h3>Say Hello</h3>
+                <form id="contact-form" class="contact-form">
+                    <div class="input-group">
+                        <input type="text" id="name" placeholder="Your Name" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="email" id="email" placeholder="Your Email" required>
+                    </div>
+                    <div class="input-group">
+                        <textarea id="message" placeholder="Your Message" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Send Message</button>
+                </form>
             </div>
         </div>
         
-        <div class="menu-card fade-up">
-            <div class="menu-img-wrap">
-                <img src="[https://images.unsplash.com/photo-1574126154517-d1e0d89ef734?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80](https://images.unsplash.com/photo-1574126154517-d1e0d89ef734?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80)" alt="Classic Scones">
-            </div>
-            <div class="menu-content">
-                <h3>Classic Scones</h3>
-                <p>Soft, warm, and crumbly. Served best with a generous dollop of clotted cream and homemade berry jam.</p>
-                <span class="menu-price">€2.80</span>
-            </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Snowflake's Bakery. Designed for Co. Clare.</p>
         </div>
+    </footer>
 
-        <div class="menu-card fade-up">
-            <div class="menu-img-wrap">
-                <img src="[https://images.unsplash.com/photo-1586444248902-2f64eddc13df?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80](https://images.unsplash.com/photo-1586444248902-2f64eddc13df?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80)" alt="Traditional Soda Bread">
-            </div>
-            <div class="menu-content">
-                <h3>Traditional Soda Bread</h3>
-                <p>A Co. Clare staple. Dense, wholesome, and baked fresh every dawn using a secret family recipe.</p>
-                <span class="menu-price">€4.50</span>
-            </div>
-        </div>
+    <div id="toast" class="toast">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <span>Message sent successfully! We'll be in touch.</span>
     </div>
-</section>
 
-<section id="reviews" class="testimonials">
-    <div class="section-header fade-up">
-        <h2>Local Love</h2>
-        <p>What our neighbors in Co. Clare are saying.</p>
-    </div>
-    
-    <div class="testimonial-grid">
-        <div class="review-card fade-up">
-            <div class="stars">★★★★★</div>
-            <p class="review-text">"The absolute best coffee in Newmarket on Fergus, hands down. And their soda bread reminds me of my grandmother's. Always a warm welcome from the staff!"</p>
-            <p class="reviewer">— Aoife M., Local Resident</p>
-        </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. Sticky Header
+            const header = document.getElementById('header');
+            
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
 
-        <div class="review-card fade-up">
-            <div class="stars">★★★★★</div>
-            <p class="review-text">"I stop here every morning before work. The artisanal croissants are dangerously good. It’s exactly the kind of independent bakery our town needed."</p>
-            <p class="reviewer">— Sean T., Commuter</p>
-        </div>
+            // 2. Mobile Menu Toggle
+            const hamburger = document.querySelector('.hamburger');
+            const mobileMenu = document.querySelector('.mobile-menu');
+            const body = document.body;
+            const mobileLinks = document.querySelectorAll('.mobile-link');
 
-        <div class="review-card fade-up">
-            <div class="stars">★★★★★</div>
-            <p class="review-text">"Beautiful sleek interior, incredibly friendly staff, and the scones are to die for. You can taste the quality and the local ingredients in every single bite."</p>
-            <p class="reviewer">— Ciara O., Weekend Regular</p>
-        </div>
-    </div>
-</section>
-
-<section id="story">
-    <div class="about-wrap">
-        <div class="about-img fade-up">
-            <img src="[https://images.unsplash.com/photo-1509456592543-0db0045f8f30?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80](https://images.unsplash.com/photo-1509456592543-0db0045f8f30?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80)" alt="Baker preparing dough">
-        </div>
-        <div class="about-text fade-up">
-            <h2>Our Story</h2>
-            <p>Rooted in the heart of Newmarket on Fergus, Co. Clare, our bakery was born from a simple belief: that good bread brings people together.</p>
-            <p>We honor traditional baking methods, allowing our sourdough to ferment slowly and sourcing our dairy and flour from local Irish farms. Every pastry is shaped by hand, and every loaf is baked with patience and passion.</p>
-            <p>Whether you're grabbing a quick coffee before heading to Shannon, or lingering over a scone on a quiet Sunday morning, we're here to offer a little slice of comfort to our community.</p>
-        </div>
-    </div>
-</section>
-
-<footer id="contact">
-    <div class="footer-grid">
-        <div class="footer-info fade-up">
-            <h3>Drop by for a bite</h3>
-            <p><strong>Address:</strong> Main St, Newmarket,<br>Newmarket on Fergus, Co. Clare</p>
-            <p><strong>Phone:</strong> 083 016 5976</p>
-            <p><strong>Email:</strong> <a href="mailto:hello@newmarketbakery.ie">hello@newmarketbakery.ie</a></p>
-            <p><strong>Hours:</strong> Tue-Sun, 7 AM - 3 PM<br>Mondays: Closed</p>
-        </div>
-
-        <div class="footer-form fade-up">
-            <h3>Say Hello</h3>
-            <form id="contact-form" class="contact-form">
-                <div class="input-group">
-                    <input type="text" id="name" placeholder="Your Name" required>
-                </div>
-                <div class="input-group">
-                    <input type="email" id="email" placeholder="Your Email" required>
-                </div>
-                <div class="input-group">
-                    <textarea id="message" placeholder="Your Message" required></textarea>
-                </div>
-                <button type="submit" class="submit-btn">Send Message</button>
-            </form>
-        </div>
-    </div>
-    
-    <div class="footer-bottom">
-        <p>&copy; 2026 Newmarket Bakery. Designed for Co. Clare.</p>
-    </div>
-</footer>
-
-<div id="toast" class="toast">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-    <span>Message sent successfully! We'll be in touch.</span>
-</div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        
-        // 1. Sticky Header
-        const header = document.getElementById('header');
-        const announcementHeight = 35; // Matches CSS var
-        
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > announcementHeight) {
-                header.classList.add('scrolled');
-            } else {
-                header.classList.remove('scrolled');
+            function toggleMenu() {
+                hamburger.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+                body.classList.toggle('menu-open');
             }
-        });
 
-        // 2. Mobile Menu Toggle
-        const hamburger = document.querySelector('.hamburger');
-        const mobileMenu = document.querySelector('.mobile-menu');
-        const body = document.body;
-        const mobileLinks = document.querySelectorAll('.mobile-link');
+            hamburger.addEventListener('click', toggleMenu);
 
-        function toggleMenu() {
-            hamburger.classList.toggle('active');
-            mobileMenu.classList.toggle('active');
-            body.classList.toggle('menu-open');
-        }
+            mobileLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if (mobileMenu.classList.contains('active')) {
+                        toggleMenu();
+                    }
+                });
+            });
 
-        hamburger.addEventListener('click', toggleMenu);
+            // 3. Scroll Animations (Intersection Observer)
+            const fadeElements = document.querySelectorAll('.fade-up');
+            
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15
+            };
 
-        mobileLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                if (mobileMenu.classList.contains('active')) {
-                    toggleMenu();
-                }
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target); // Run once
+                    }
+                });
+            }, observerOptions);
+
+            fadeElements.forEach(el => observer.observe(el));
+
+            // 4. Form Handling & Toast
+            const form = document.getElementById('contact-form');
+            const toast = document.getElementById('toast');
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault(); 
+                
+                toast.classList.add('show');
+                form.reset();
+
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
             });
         });
-
-        // 3. Scroll Animations (Intersection Observer)
-        const fadeElements = document.querySelectorAll('.fade-up');
-        
-        const observerOptions = {
-            root: null,
-            rootMargin: '0px',
-            threshold: 0.15
-        };
-
-        const observer = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                    observer.unobserve(entry.target); // Run once
-                }
-            });
-        }, observerOptions);
-
-        fadeElements.forEach(el => observer.observe(el));
-
-        // 4. Form Handling & Toast
-        const form = document.getElementById('contact-form');
-        const toast = document.getElementById('toast');
-
-        form.addEventListener('submit', (e) => {
-            e.preventDefault(); // Prevent page reload
-            
-            // Show toast
-            toast.classList.add('show');
-            
-            // Reset form
-            form.reset();
-
-            // Hide toast after 3 seconds
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        });
-    });
-</script>
+    </script>
 </body>
 </html>
